@@ -1,6 +1,8 @@
 #include "SPI.h"
 #include "Adafruit_WS2801.h"
 #include "strandFunctions.h"
+#include "Audio_monitor.h"
+#include "MsTimer2.h"
 
 //#include "johnutils.h"
 
@@ -12,6 +14,22 @@
 Stuff we need to class up. Tests, etc.
 *****************************************************************************/
 playFlag_t play_flag = 1;
+uint8_t sine_arr[101] = { 128, 143, 159, 174, 189, 202, 215, 226, 
+                       235, 243, 249, 253, 255, 255, 253, 249, 
+                       243, 235, 226, 215, 202, 189, 174, 159, 
+                       143, 128, 112, 96, 81, 66, 53, 40, 29, 
+                       20, 12, 6, 2, 1, 1, 2, 6, 12, 20, 29, 
+                       40, 53, 66, 81, 96, 112, 127, 143, 159, 
+                       174, 189, 202, 215, 226, 235, 243, 249, 
+                       253, 255, 255, 253, 249, 243, 235, 226, 
+                       215, 202, 189, 174, 159, 143, 128, 112, 
+                       96, 81, 66, 53, 40, 29, 20, 12, 6, 2, 
+                       1, 1, 2, 6, 12, 20, 29, 40, 53, 66, 81, 
+                       96, 112, 127};
+
+uint8_t sine_arr2[10] = { 20, 20, 45, 55, 75,
+                          105, 175, 105, 75, 55};
+                       
 uint32_t test_arr[25] = {4294967040, 4294966272, 4294965504, 4294964736, 
                         4294963968, 4294963200, 4294962432, 4294961664, 
                         4294960896, 4294960128, 4294959360, 4294958592, 
@@ -22,7 +40,7 @@ uint32_t test_arr[25] = {4294967040, 4294966272, 4294965504, 4294964736,
 
 int dataPin  = 2;    // Yellow wire on Adafruit Pixels
 int clockPin = 3;    // Green wire on Adafruit Pixels
-int stripLen = 25;
+int stripLen = 20;
 
 // Set the first variable to the NUMBER of pixels. 25 = 25 pixels in a row
 Adafruit_WS2801 strip = Adafruit_WS2801(stripLen, dataPin, clockPin);
@@ -35,30 +53,97 @@ void setup() {
   strip.show();
 }
 
+uint16_t global_pause = 1;
 
 void loop() {
   // Some example procedures showing how to display to the pixels
- 
-   
-colorWipe(Color(50, 0, 0), 1);
-more(BLUE, 30);
-delay(1000);
-more(GREEN, 200);
-delay(1000);
-less(GREEN, 100);
-delay(1000);
-brighter(40);
-delay(1000);
-brighter(40);
-delay(1000);
-dimmer(25);
-delay(1000);
-rainbow(1);
+colorWipe(Color(25, 50, 25), 1);
+Serial.println(rgbColorsString(strip.getPixelColor(10)));
+delay(500);
+brighter2(2);
+Serial.println(rgbColorsString(strip.getPixelColor(10)));
+//dimmer(50);
+delay(500);
+brighter2(1.5);
+Serial.println(rgbColorsString(strip.getPixelColor(10)));
+//dimmer(50);
+delay(500);
+//showSine(35);
+//global_pause = (1023 - Audio_monitor::instance().get_amplitude())/10;
+}
+
+
 
 //all of the above works as best I know, uncomment the below to see if this works
 //playColors(test_arr, 25);
+
+
+
+void testWave() {
+  int i;
+float amplitude = 255;
+for (i = 0; i < 10000; i++) {
+  float fubu = sineWave(amplitude, float(i));
+  int out = int(fubu + 0.5);
+  Serial.println(out);
+  delay(5);
+  pushOne(Color(out, 0, 0));
+}
+}
+void pushOne(uint32_t c) {
+  uint32_t current_arr[stripLen];
+  int i;
+  for (i=0; i < stripLen; i++) {
+    current_arr[i] = strip.getPixelColor(i);
+  }
+
+  for (i=1; i < stripLen; i++) {
+    strip.setPixelColor(i, current_arr[i-1]);
+  }
+  strip.setPixelColor(0, c);
+  strip.show();
 }
 
+// real sine function
+float sineWave(float amplitude, float value) {
+  float frequency = 5;
+  value = value;
+  float output = (sin(3.14159*frequency*value/amplitude)+1)/2*amplitude;
+//  float output = amplitude * sin(((3.14159 *2) * frequency) * value);
+  return output;
+}
+  
+//hack using predefined array
+void showSine(uint8_t pause) {
+  int i;
+  for (i = 0; i < 11; i++) {
+  pushOne(Color(sine_arr2[i], 0, 0));
+  delay(pause);
+  }
+}
+
+/*    
+uint8_t sineTest(){ 
+  int i;
+  for (i=1;i < 20; i++) {
+    float sineout;
+    sineout = sinewave(1.0, 2, float(i));
+    Serial.println(sineout);
+  }
+}
+  }
+*/
+
+float sinewave(float a, int8_t f, float value) {
+  float output = a * sin(((3.14159*2)*f)*value/100);
+  return output;
+}
+
+
+  
+  
+   
+  
 //public stuff
 // more COLOR, how much
 void more(int color, int amount){
@@ -91,6 +176,47 @@ void more(int color, int amount){
   }
 }
 
+// UNTESTED, I can't see this work
+// SORTA TESTED AND BROKEN NEEDS HELP
+// note this is going to make the whole strip the same color. An interpolation that goes
+// from where each pixel is now to a new value that is of equal differential to the 
+// other pixels would be highly cool as well. That might be easier with Aprils HSV stuff.
+// I can do that with this, but it is going to require another function and some time.
+
+// give this rgb as int8's and a number of steps, it goes from where it is now to that.
+void interpolateTo(uint8_t red, uint8_t blue, uint8_t green, uint8_t steps) {
+  int i, j, rout, gout, bout;
+  rgbInfo_t rgb_info[25];
+
+  //first we need all the starting colors of the strip
+  for (i=0; i < stripLen; i++) {
+    rgb_info[i] = unpackColors(strip.getPixelColor(i));
+  }
+  //now we do the mathy bits and step through the color change
+  for (i=1; i <=steps; i++) {
+    for (j=0; j < stripLen; j++) {
+      rout = i * (red - rgb_info[j].r)/(steps - 1);
+      gout = i * (green - rgb_info[j].g)/(steps - 1);
+      bout = i * (blue - rgb_info[j].b)/(steps - 1);
+      strip.setPixelColor(i, Color(rout, gout, bout));
+    }
+    strip.show();
+    //DEBUG
+    String outstring;
+    outstring = rgbColorsString(strip.getPixelColor(10));
+    Serial.println("something!  " + outstring);
+
+  }
+}
+      
+      
+      
+      
+    
+  
+  
+  
+  
 // less COLOR, how much
 void less(int color, int amount){
   int i;
@@ -118,6 +244,45 @@ void less(int color, int amount){
     strip.setPixelColor(i, Color( rgb_info.r,
                                   rgb_info.g,
                                   rgb_info.b));
+    strip.show();
+  }
+}
+
+void maxOut() {
+  int i;
+  for (i=0; i < striplen; i ++) {
+    uint32_t scolor = strip.getPixelColor(i);
+  }
+}
+
+void brighter2(float amount){
+  int i;
+  float incr, incg, incb;
+  for (i=0;i < stripLen;i++) {  
+    uint32_t scolor = strip.getPixelColor(i);
+    rgbInfo_t rgb_info = unpackColors(scolor);
+
+    if (rgb_info.r * amount <= 255) { 
+      rgb_info.r = int(rgb_info.r * amount);
+    }
+    else break;
+    
+    if (rgb_info.g * amount <= 255) { 
+      rgb_info.g = int(rgb_info.g * amount);
+    }
+    else break;
+    
+    if (rgb_info.b * amount <= 255) { 
+      rgb_info.b = int(rgb_info.b * amount);
+    }
+    else break;
+    
+    strip.setPixelColor(i, Color( rgb_info.r,
+                                  rgb_info.g, 
+                                  rgb_info.b));
+    //this here shows the diff one pixel at a time.
+   //to make it just show the whole thing, move past bracket.
+  //is only going to matter if a LOT of crap is going on in ard. 
     strip.show();
   }
 }
