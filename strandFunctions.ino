@@ -1,5 +1,5 @@
 #include "SPI.h"
-#include "Adafruit_WS2801.h"
+#include "Zoa_WS2801.h"
 #include "strandFunctions.h"
 #include "Audio_monitor.h"
 #include "MsTimer2.h"
@@ -38,12 +38,12 @@ uint32_t test_arr[25] = {4294967040, 4294966272, 4294965504, 4294964736,
                         4294951680, 4294950912, 4294950144, 4294949376, 
                         4294948608};
 
-int dataPin  = 2;    // Yellow wire on Adafruit Pixels
-int clockPin = 3;    // Green wire on Adafruit Pixels
+int dataPin  = 2;    // Yellow wire on Zoa Pixels
+int clockPin = 3;    // Green wire on Zoa Pixels
 int stripLen = 20;
 
 // Set the first variable to the NUMBER of pixels. 25 = 25 pixels in a row
-Adafruit_WS2801 strip = Adafruit_WS2801(stripLen, dataPin, clockPin);
+Zoa_WS2801 strip = Zoa_WS2801(stripLen, dataPin, clockPin);
 
 
 
@@ -103,36 +103,6 @@ void pushOne(uint32_t c) {
   strip.setPixelColor(0, c);
   strip.show();
 }
-
-// real sine function
-float sineWave(float amplitude, float value) {
-  float frequency = 5;
-  value = value;
-  float output = (sin(3.14159*frequency*value/amplitude)+1)/2*amplitude;
-//  float output = amplitude * sin(((3.14159 *2) * frequency) * value);
-  return output;
-}
-  
-//hack using predefined array
-void showSine(uint8_t pause) {
-  int i;
-  for (i = 0; i < 11; i++) {
-  pushOne(Color(sine_arr2[i], 0, 0));
-  delay(pause);
-  }
-}
-
-/*    
-uint8_t sineTest(){ 
-  int i;
-  for (i=1;i < 20; i++) {
-    float sineout;
-    sineout = sinewave(1.0, 2, float(i));
-    Serial.println(sineout);
-  }
-}
-  }
-*/
 
 float sinewave(float a, int8_t f, float value) {
   float output = a * sin(((3.14159*2)*f)*value/100);
@@ -250,7 +220,7 @@ void less(int color, int amount){
 
 void maxOut() {
   int i;
-  for (i=0; i < striplen; i ++) {
+  for (i=0; i < stripLen; i ++) {
     uint32_t scolor = strip.getPixelColor(i);
   }
 }
@@ -486,3 +456,36 @@ uint32_t Wheel(byte WheelPos)
    return Color(0, WheelPos * 3, 255 - WheelPos * 3);
   }
 }
+
+//VERY OLD STUFF BEING KEPT FOR REFERENCE
+
+
+// real sine function
+float sineWave(float amplitude, float value) {
+  float frequency = 5;
+  value = value;
+  float output = (sin(3.14159*frequency*value/amplitude)+1)/2*amplitude;
+//  float output = amplitude * sin(((3.14159 *2) * frequency) * value);
+  return output;
+}
+  
+//hack using predefined array
+void showSine(uint8_t pause) {
+  int i;
+  for (i = 0; i < 11; i++) {
+  pushOne(Color(sine_arr2[i], 0, 0));
+  delay(pause);
+  }
+}
+
+/*    
+uint8_t sineTest(){ 
+  int i;
+  for (i=1;i < 20; i++) {
+    float sineout;
+    sineout = sinewave(1.0, 2, float(i));
+    Serial.println(sineout);
+  }
+}
+  }
+*/
