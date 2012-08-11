@@ -57,15 +57,51 @@ uint16_t global_pause = 1;
 
 void loop() {
   // Some example procedures showing how to display to the pixels
-colorWipe(Color(25, 50, 25), 1);
+colorWipe(Color(25, 75, 25), 1);
+//Serial.println(rgbColorsString(strip.getPixelColor(10)));
+delay(5);
+brighter2(2.0);
+ Serial.println("after brighter:");
 Serial.println(rgbColorsString(strip.getPixelColor(10)));
-delay(500);
-brighter2(2);
-Serial.println(rgbColorsString(strip.getPixelColor(10)));
-delay(500);
-brighter2(1.5);
-Serial.println(rgbColorsString(strip.getPixelColor(10)));
-delay(500);
+delay(5);
+//brighter2(1.5);
+//Serial.println(rgbColorsString(strip.getPixelColor(10)));
+delay(5);
+}
+
+
+void brighter2(float amount){
+  int i;
+  float incr, incg, incb;
+  for (i=0;i < stripLen; i++) {  
+    uint32_t scolor = strip.getPixelColor(i);
+    rgbInfo_t rgb_info = unpackColors(scolor);
+
+    if (rgb_info.r * amount <= 254) { 
+      Serial.println("STARTING");
+      Serial.println(rgb_info.r);
+      rgb_info.r = int(rgb_info.r * amount);
+
+      Serial.println(rgb_info.r);
+    }
+    else continue;
+    
+    if (rgb_info.g * amount <= 254) { 
+      rgb_info.g = int(rgb_info.g * amount);
+    }
+    else continue;
+    
+    if (rgb_info.b * amount <= 254) { 
+      rgb_info.b = int(rgb_info.b * amount);
+    }
+    else continue;
+    Serial.println(rgb_info.r);
+    strip.setPixelColor(i, Color( rgb_info.r,
+                                  rgb_info.g, 
+                                  rgb_info.b));
+
+  }
+  strip.show();
 }
 
 //public stuff
@@ -179,37 +215,6 @@ void maxOut() {
   }
 }
 
-void brighter2(float amount){
-  int i;
-  float incr, incg, incb;
-  for (i=0;i < stripLen;i++) {  
-    uint32_t scolor = strip.getPixelColor(i);
-    rgbInfo_t rgb_info = unpackColors(scolor);
-
-    if (rgb_info.r * amount <= 255) { 
-      rgb_info.r = int(rgb_info.r * amount);
-    }
-    else break;
-    
-    if (rgb_info.g * amount <= 255) { 
-      rgb_info.g = int(rgb_info.g * amount);
-    }
-    else break;
-    
-    if (rgb_info.b * amount <= 255) { 
-      rgb_info.b = int(rgb_info.b * amount);
-    }
-    else break;
-    
-    strip.setPixelColor(i, Color( rgb_info.r,
-                                  rgb_info.g, 
-                                  rgb_info.b));
-    //this here shows the diff one pixel at a time.
-   //to make it just show the whole thing, move past bracket.
-  //is only going to matter if a LOT of crap is going on in ard. 
-    strip.show();
-  }
-}
 
 // how much brighter
 // known issue here: if you have pixels with a color at 255 already,
@@ -337,7 +342,7 @@ rgbInfo_t unpackColors(uint32_t c){
   return(rgb_info);
 }
 
-//untested
+
 //give it a Color value and it gives you a string with RGB. For troubleshooting.
 String rgbColorsString (uint32_t c){
   rgbInfo_t rgb_info = unpackColors(c);
