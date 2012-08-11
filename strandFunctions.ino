@@ -62,58 +62,12 @@ Serial.println(rgbColorsString(strip.getPixelColor(10)));
 delay(500);
 brighter2(2);
 Serial.println(rgbColorsString(strip.getPixelColor(10)));
-//dimmer(50);
 delay(500);
 brighter2(1.5);
 Serial.println(rgbColorsString(strip.getPixelColor(10)));
-//dimmer(50);
 delay(500);
-//showSine(35);
-//global_pause = (1023 - Audio_monitor::instance().get_amplitude())/10;
 }
 
-
-
-//all of the above works as best I know, uncomment the below to see if this works
-//playColors(test_arr, 25);
-
-
-
-void testWave() {
-  int i;
-float amplitude = 255;
-for (i = 0; i < 10000; i++) {
-  float fubu = sineWave(amplitude, float(i));
-  int out = int(fubu + 0.5);
-  Serial.println(out);
-  delay(5);
-  pushOne(Color(out, 0, 0));
-}
-}
-void pushOne(uint32_t c) {
-  uint32_t current_arr[stripLen];
-  int i;
-  for (i=0; i < stripLen; i++) {
-    current_arr[i] = strip.getPixelColor(i);
-  }
-
-  for (i=1; i < stripLen; i++) {
-    strip.setPixelColor(i, current_arr[i-1]);
-  }
-  strip.setPixelColor(0, c);
-  strip.show();
-}
-
-float sinewave(float a, int8_t f, float value) {
-  float output = a * sin(((3.14159*2)*f)*value/100);
-  return output;
-}
-
-
-  
-  
-   
-  
 //public stuff
 // more COLOR, how much
 void more(int color, int amount){
@@ -358,12 +312,21 @@ void playColors(uint32_t colors[], uint8_t arr_len){
   } 
 }
 
-//takes rgb tripes in an array and plays them
-void playRGB(){
+//utility stuff
+void pushOne(uint32_t c) {
+  uint32_t current_arr[stripLen];
+  int i;
+  for (i=0; i < stripLen; i++) {
+    current_arr[i] = strip.getPixelColor(i);
+  }
+
+  for (i=1; i < stripLen; i++) {
+    strip.setPixelColor(i, current_arr[i-1]);
+  }
+  strip.setPixelColor(0, c);
+  strip.show();
 }
 
-
-//utility stuff
 rgbInfo_t unpackColors(uint32_t c){
   rgbInfo_t rgb_info;
   rgb_info.b = lowByte(c); 
@@ -489,3 +452,22 @@ uint8_t sineTest(){
 }
   }
 */
+
+void testWave() {
+  int i;
+float amplitude = 255;
+for (i = 0; i < 10000; i++) {
+  float fubu = sineWave(amplitude, float(i));
+  int out = int(fubu + 0.5);
+  Serial.println(out);
+  delay(5);
+  pushOne(Color(out, 0, 0));
+}
+}
+
+float sinewave(float a, int8_t f, float value) {
+  float output = a * sin(((3.14159*2)*f)*value/100);
+  return output;
+}
+
+
